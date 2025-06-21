@@ -1,0 +1,41 @@
+# docker-compose.yml
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: gestion_notes
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: ./Backend
+    depends_on:
+      - db
+    # on attend que MySQL soit UP grâce à wait-for-it.sh
+    command: ["/wait-for-it.sh", "db:3306", "--timeout=30", "--strict", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+    volumes:
+      - ./Backend:/app
+      - ./Front-end:/Front-end
+    ports:
+      - "8000:8000"
+    environment:
+      # ces vars sont récupérées dans settings.py si tu utilises os.environ.get()
+      - DB_NAME=gestion_notes
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_PORT=3306
+
+volumes:
+  mysql_data:

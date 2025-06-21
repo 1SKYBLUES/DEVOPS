@@ -1,0 +1,22 @@
+FROM python:3.11-bullseye
+
+# Mise à jour et installation des outils nécessaires
+RUN apt-get update && apt-get install -y \
+    gcc \
+    build-essential \
+    default-mysql-client \
+    netcat \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Définir le dossier de travail
+WORKDIR /app
+
+# Copier le code source
+COPY . /app
+
+# Installer les dépendances Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Script pour attendre MySQL
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
